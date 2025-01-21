@@ -1,0 +1,31 @@
+Database Design & Normalization Rationale
+
+The database schema for the Bus Booking Management System follows 3rd Normal Form (3NF) to eliminate redundancy and ensure efficient data storage. Each table is designed with atomic attributes and proper relationships to maintain data integrity.
+
+The Users, BusOperators, Buses, Routes, and Trips tables are normalized to avoid data duplication. For example, instead of storing the bus operator’s details in the Buses table, we created a separate BusOperators table and linked them via OperatorID. This avoids redundant storage of operator information across multiple buses.
+
+The Bookings table maintains a relationship between Users and Trips, ensuring that each booking is associated with a specific user and trip. Since a user can make multiple bookings, we store UserID as a foreign key instead of duplicating user details.
+
+The Payments table is normalized separately to ensure each booking has a single payment transaction. Since different payment methods (UPI, Card, Wallet, etc.) can be used, keeping a separate table avoids unnecessary null values in the Bookings table.
+
+The CheckIns table is kept separate because not all passengers check in after booking. Instead of adding a nullable CheckInTime column in Bookings, having a dedicated table ensures that only relevant records store check-in details, reducing null values.
+
+The BusTracking table is denormalized by storing the latest tracking data for each trip instead of maintaining a separate tracking history table. This is done for query efficiency—fetching the current location of a bus can be done with a single lookup instead of sorting multiple records.
+
+The phone number is stored as a VARCHAR(15) instead of an INT because:
+
+Phone numbers do not require mathematical operations.
+Different countries have varying formats and country codes (e.g., +91-9876543210).
+Storing it as an integer would remove leading zeros, which is problematic for some formats.
+The Reviews table is normalized to avoid redundant storage of user and operator details in every review entry. By referencing UserID and OperatorID, we avoid repeating user/operator names, ensuring data consistency.
+
+The Trips table follows 3NF, as it only stores references to Buses and Routes. This avoids redundancy while allowing multiple trips to use the same route.
+
+Some queries benefit from this structure, such as:
+
+	To get real-time bus tracking:
+		SELECT CurrentLocation FROM BusTracking WHERE TripID = 1;
+	To get all confirmed bookings for a trip:
+		SELECT U.Name, B.SeatNumber FROM Bookings B  
+		JOIN Users U ON B.UserID = U.UserID  
+		WHERE B.TripID = 1 AND B.BookingStatus = 'Confirmed';
